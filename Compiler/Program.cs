@@ -19,7 +19,7 @@ namespace Compiler
     {
         static void Main(string[] args)
         {
-            string source = File.ReadAllText("Samples/primes.silang");
+            string source = File.ReadAllText("Samples/pascal.silang");
 
             try
             {

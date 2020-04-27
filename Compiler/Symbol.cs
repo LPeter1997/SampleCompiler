@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace Compiler
@@ -185,7 +186,7 @@ namespace Compiler
     /// </summary>
     public class IntegerValue : Value
     {
-        public int Value { get; set; }
+        public BigInteger Value { get; set; }
     }
 
     /// <summary>

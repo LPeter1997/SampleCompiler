@@ -31,7 +31,7 @@ namespace Compiler
         {
             var interpreter = new TreeWalkInterpreter();
             interpreter.AddDefaultNativeFunctions();
-            interpreter.Execute(program);
+            interpreter.Execute(program, true);
         }
 
         /// <summary>
@@ -51,13 +51,16 @@ namespace Compiler
         public void AddDefaultNativeFunctions()
         {
             AddNativeFunction("print", DefaultNativeFunctions.Print);
+            AddNativeFunction("println", DefaultNativeFunctions.Println);
+            AddNativeFunction("space", DefaultNativeFunctions.Space);
+            AddNativeFunction("plot_x", DefaultNativeFunctions.PlotX);
         }
 
         /// <summary>
         /// Lefuttatja az adott utasítás szintaxisfáját.
         /// </summary>
         /// <param name="stmt">A lefuttatandó utasítás szintaxisfája.</param>
-        public void Execute(Statement stmt)
+        public void Execute(Statement stmt, bool suppressScope = false)
         {
             switch (stmt)
             {
@@ -110,12 +113,18 @@ namespace Compiler
 
                 case CompoundStatement s:
                 {
-                    PushScope();
+                    if (!suppressScope)
+                    {
+                        PushScope();
+                    }
                     foreach (var substmt in s.Statements)
                     {
                         Execute(substmt);
-                    }    
-                    PopScope();
+                    }
+                    if (!suppressScope)
+                    {
+                        PopScope();
+                    }
                     return;
                 }
 
@@ -337,7 +346,28 @@ namespace Compiler
                     throw new RuntimeError { Description = "Can't print type!" };
                 }
             }
+            return new VoidValue();
+        }
+
+        public static Value Println(List<Value> args)
+        {
+            var ret = Print(args);
             Console.WriteLine();
+            return ret;
+        }
+
+        public static Value Space(List<Value> args)
+        {
+            ExpectArgc(args, 0);
+            Console.Write(' ');
+            return new VoidValue();
+        }
+
+        public static Value PlotX(List<Value> args)
+        {
+            ExpectArgc(args, 1);
+            var plot = args[0].AsBool().Value;
+            Console.Write(plot ? 'x' : ' ');
             return new VoidValue();
         }
 
