@@ -16,5 +16,6 @@ function is_prime(x) {
 var i = 0;
 while i < 100 {
 	print(i, is_prime(i));
+        println();
 	i = i + 1;
 }
