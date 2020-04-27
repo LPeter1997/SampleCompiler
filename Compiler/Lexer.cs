@@ -170,11 +170,11 @@ namespace Compiler
             while (true)
             {
                 var tok = NextToken(reader);
+                result.Add(tok);
                 if (tok.Type == TokenType.EndOfSource)
                 {
                     break;
                 }
-                result.Add(tok);
             }
             return result;
         }

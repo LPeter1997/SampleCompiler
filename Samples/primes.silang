@@ -1,0 +1,20 @@
+
+function is_prime(x) {
+	if x < 2 {
+		return false;
+	}
+	var i = 2;
+	while i < x {
+		if x % i == 0 {
+			return false;
+		}
+		i = i + 1;
+	}
+	return true;
+}
+
+var i = 0;
+while i < 100 {
+	print(i, is_prime(i));
+	i = i + 1;
+}

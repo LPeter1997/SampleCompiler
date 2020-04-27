@@ -35,30 +35,20 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Visszaadja a nézet első elemét, vagy egy alapértelmezett értéket, ha a lista üres.
+        /// Visszaadja a nézet első elemét.
         /// </summary>
-        /// <param name="default">Az alapértelmezett érték üres lista esetén.</param>
-        /// <returns>A lista nézet első eleme, vagy az alapértelmezett érték, ha a lista üres.</returns>
-        public T FirstOrDefault(T @default)
+        /// <returns>A lista nézet első eleme.</returns>
+        public T First()
         {
-            if (this.length <= 0)
-            {
-                return @default;
-            }
             return this.list[this.offset];
         }
 
         /// <summary>
-        /// Visszaadja a nézet utolsó elemét, vagy egy alapértelmezett értéket, ha a lista üres.
+        /// Visszaadja a nézet utolsó elemét.
         /// </summary>
-        /// <param name="default">Az alapértelmezett érték üres lista esetén.</param>
-        /// <returns>A lista nézet utolsó eleme, vagy az alapértelmezett érték, ha a lista üres.</returns>
-        public T LastOrDefault(T @default)
+        /// <returns>A lista nézet utolsó eleme.</returns>
+        public T Last()
         {
-            if (this.length <= 0)
-            {
-                return @default;
-            }
             return this.list[this.offset + this.length - 1];
         }
 

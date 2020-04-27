@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Utilities;
 
 namespace Compiler
@@ -18,22 +19,14 @@ namespace Compiler
     {
         static void Main(string[] args)
         {
-            string source = @"
-function max(x, y) {
-    if x > y {
-        return x;
-    }
-    else {
-        return y;
-    }
-}
-";
+            string source = File.ReadAllText("Samples/primes.silang");
 
             try
             {
                 var tokens = Lexer.Lex(source);
                 var ast = Parser.ParseProgram(tokens);
-                Console.WriteLine(ast.ToJson());
+                //Console.WriteLine(ast.ToJson());
+                TreeWalkInterpreter.RunProgram(ast);
             }
             catch (CompilerError e)
             {

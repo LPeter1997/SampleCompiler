@@ -70,7 +70,7 @@ namespace Compiler
     /// zárójeleket tárolni egy matematikai művelethez, mikor a fa struktúrája egyértelműen
     /// kódolja a kiértékelés sorrendjét.
     /// </summary>
-    public class AstNode
+    public abstract class AstNode
     {
         /// <summary>
         /// A legtöbb esetben jó, ha vizualizálhatjuk a szintaxisfánkat. Erre tökéletes
@@ -91,7 +91,7 @@ namespace Compiler
     /// Klasszikusan a C-szerű nyelvekben ilyen az elágazás, a ciklusok, változó definiálás,
     /// stb.
     /// </summary>
-    public class Statement : AstNode
+    public abstract class Statement : AstNode
     {
     }
 
@@ -99,7 +99,7 @@ namespace Compiler
     /// A kifejezések olyan szerkezetek, melyek valamilyen eredményt adnak vissza. Ilyen 
     /// egy összeadás, vagy egy függvényhívás.
     /// </summary>
-    public class Expression : AstNode
+    public abstract class Expression : AstNode
     {
     }
 
@@ -264,7 +264,7 @@ namespace Compiler
     public class ReturnStatement : Statement
     {
         /// <summary>
-        /// A visszatérési érték.
+        /// A visszatérési érték, vagy null ha nincs.
         /// </summary>
         public Expression Value { get; set; }
     }

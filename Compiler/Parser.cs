@@ -328,6 +328,12 @@ namespace Compiler
         private static TokenView ParseReturnStatement(TokenView input, out Statement result)
         {
             input = input.Expect(TokenType.KwReturn);
+            if (input.Peek().Type == TokenType.Semicolon)
+            {
+                input = input.Expect(TokenType.Semicolon);
+                result = new ReturnStatement { Value = null };
+                return input;
+            }
             input = ExpressionParser.Parse(input, out var expr);
             input = input.Expect(TokenType.Semicolon);
             result = new ReturnStatement { Value = expr };
@@ -386,12 +392,10 @@ namespace Compiler
     public struct TokenView
     {
         private ListView<Token> tokens;
-        private Token last;
 
-        private TokenView(ListView<Token> tokens, Token last)
+        private TokenView(ListView<Token> tokens)
         {
             this.tokens = tokens;
-            this.last = last;
         }
 
         /// <summary>
@@ -399,18 +403,8 @@ namespace Compiler
         /// </summary>
         /// <param name="tokens">A beburkolandó token lista.</param>
         public TokenView(List<Token> tokens)
+            : this(new ListView<Token>(tokens))
         {
-            this.tokens = new ListView<Token>(tokens);
-            var lastToken = new Token 
-            { 
-                Source = new PosTextReader(string.Empty), 
-                Position = Position.Zero, 
-                Type = TokenType.EndOfSource, 
-                Value = string.Empty 
-            };
-            var lastPos = this.tokens.LastOrDefault(lastToken).Position;
-            lastToken.Position = lastPos;
-            this.last = lastToken;
         }
 
         /// <summary>
@@ -419,7 +413,7 @@ namespace Compiler
         /// <returns>A következő token.</returns>
         public Token Peek()
         {
-            return this.tokens.FirstOrDefault(this.last);
+            return this.tokens.First();
         }
 
         /// <summary>
@@ -428,7 +422,7 @@ namespace Compiler
         /// <returns>Egy olyan nézet, melyben az első token nem szerepel.</returns>
         public TokenView Consume()
         {
-            return new TokenView(this.tokens.RemoveFirst(), this.last);
+            return new TokenView(this.tokens.RemoveFirst());
         }
 
         /// <summary>
