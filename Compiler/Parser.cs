@@ -184,13 +184,19 @@ namespace Compiler
             if (peek.Type == TokenType.Integer)
             {
                 input = input.Consume();
-                result = new IntegerLiteralExpression { Value = int.Parse(peek.Value) };
+                result = new IntegerLiteralExpression { Value = peek };
+                return input;
+            }
+            if (peek.Type == TokenType.String)
+            {
+                input = input.Consume();
+                result = new StringLiteralExpression { Value = peek };
                 return input;
             }
             if (peek.Type == TokenType.KwTrue || peek.Type == TokenType.KwFalse)
             {
                 input = input.Consume();
-                result = new BoolLiteralExpression { Value = peek.Type == TokenType.KwTrue };
+                result = new BoolLiteralExpression { Value = peek };
                 return input;
             }
             throw new UnexpectedTokenError(peek);

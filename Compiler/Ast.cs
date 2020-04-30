@@ -111,10 +111,9 @@ namespace Compiler
     public class IntegerLiteralExpression : Expression
     {
         /// <summary>
-        /// A számérték, amit a csomópont reprezentál. A kódban egy szám-literálként
-        /// jelent meg.
+        /// A számértéket reprezentáló token.
         /// </summary>
-        public int Value { get; set; }
+        public Token Value { get; set; }
     }
 
     /// <summary>
@@ -123,10 +122,53 @@ namespace Compiler
     public class BoolLiteralExpression : Expression
     {
         /// <summary>
-        /// A logikai érték, amit a csomópont reprezentál. A kódban a 'true' vagy 'false' 
-        /// kulcsszóként jelent meg.
+        /// A logikai értékek reprezentáló token.
         /// </summary>
-        public bool Value { get; set; }
+        public Token Value { get; set; }
+    }
+
+    /// <summary>
+    /// Egy karakterlánc literál.
+    /// </summary>
+    public class StringLiteralExpression : Expression
+    {
+        /// <summary>
+        /// A karakterláncot reprezentáló token.
+        /// </summary>
+        public Token Value { get; set; }
+
+        /// <summary>
+        /// A literál karakterláncot egy natív C# karakterlánccá alakítja.
+        /// </summary>
+        /// <returns></returns>
+        public string Unescape()
+        {
+            string result = string.Empty;
+            for (int i = 1; i < Value.Value.Length - 1;)
+            {
+                char ch = Value.Value[i];
+                if (ch == '\\')
+                {
+                    // Escaped character
+                    char esc = '\0';
+                    switch (Value.Value[i + 1])
+                    {
+                        case '\'': esc = '\''; break;
+                        case '0': esc = '\0'; break;
+                        case 't': esc = '\t'; break;
+                        case 'n': esc = '\n'; break;
+                    }
+                    result += esc;
+                    i += 2;
+                }
+                else
+                {
+                    result += ch;
+                    ++i;
+                }
+            }
+            return result;
+        }
     }
 
     /// <summary>

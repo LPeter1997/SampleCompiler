@@ -145,9 +145,11 @@ namespace Compiler
         {
             switch (expr)
             {
-                case IntegerLiteralExpression e: return new IntegerValue { Value = e.Value };
-                case BoolLiteralExpression e: return new BoolValue { Value = e.Value };
-                
+                case IntegerLiteralExpression e: return new IntegerValue { Value = int.Parse(e.Value.Value) };
+                case BoolLiteralExpression e: return new BoolValue { Value = e.Value.Type == TokenType.KwTrue };
+
+                case StringLiteralExpression e: return new StringValue { Value = e.Unescape() };
+
                 case VariableExpression e:
                 {
                     var symbol = this.currentScope.Reference(e.Identifier);
@@ -317,14 +319,8 @@ namespace Compiler
     {
         public static Value Print(List<Value> args)
         {
-            bool first = true;
             foreach (var arg in args)
             {
-                if (!first)
-                {
-                    Console.Write(", ");
-                }
-                first = false;
                 if (arg.IsInteger())
                 {
                     Console.Write(arg.AsInteger().Value);
@@ -332,6 +328,10 @@ namespace Compiler
                 else if (arg.IsBool())
                 {
                     Console.Write(arg.AsBool().Value);
+                }
+                else if (arg.IsString())
+                {
+                    Console.Write(arg.AsString().Value);
                 }
                 else if (arg.IsFunction())
                 {

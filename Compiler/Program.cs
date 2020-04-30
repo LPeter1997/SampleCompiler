@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using Utilities;
 
 namespace Compiler
@@ -19,7 +20,7 @@ namespace Compiler
     {
         static void Main(string[] args)
         {
-            string source = File.ReadAllText("Samples/factorial.silang");
+            string source = File.ReadAllText("Samples/strings.silang");
 
             try
             {

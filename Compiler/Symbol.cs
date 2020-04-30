@@ -128,6 +128,7 @@ namespace Compiler
         public bool IsVoid() { return (this as VoidValue) != null; }
         public bool IsInteger() { return (this as IntegerValue) != null; }
         public bool IsBool() { return (this as BoolValue) != null; }
+        public bool IsString() { return (this as StringValue) != null; }
         public bool IsFunction() { return (this as FunctionValue) != null; }
         public bool IsNativeFunction() { return (this as NativeFunctionValue) != null; }
 
@@ -151,6 +152,16 @@ namespace Compiler
                 throw new TypeError { Expected = "bool", Got = this.GetType().Name };
             }
             return this as BoolValue;
+        }
+        
+        public StringValue AsString()
+        {
+            if (!IsString())
+            {
+                // TODO: Janky error
+                throw new TypeError { Expected = "string", Got = this.GetType().Name };
+            }
+            return this as StringValue;
         }
 
         public FunctionValue AsFunction()
@@ -195,6 +206,14 @@ namespace Compiler
     public class BoolValue : Value
     {
         public bool Value { get; set; }
+    }
+
+    /// <summary>
+    /// Szöveges érték.
+    /// </summary>
+    public class StringValue : Value
+    {
+        public string Value { get; set; }
     }
 
     /// <summary>

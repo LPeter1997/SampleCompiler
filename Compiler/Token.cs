@@ -50,6 +50,11 @@ namespace Compiler
         /// Egész szám.
         /// </summary>
         Integer,
+
+        /// <summary>
+        /// Karakterlánc.
+        /// </summary>
+        String,
         
         // Kulcsszavak
         KwFunction, // 'function'

@@ -88,6 +88,7 @@ namespace Compiler
 
             AddRegex("[A-Za-z_][A-Za-z0-9_]*", TokenType.Identifier);
             AddRegex("[0-9]+", TokenType.Integer);
+            AddRegex(@"'(\\.|[^'])*'", TokenType.String);
 
             AddKeyword("function", TokenType.KwFunction);
             AddKeyword("if", TokenType.KwIf);
