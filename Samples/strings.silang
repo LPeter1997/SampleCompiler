@@ -1,5 +1,2 @@
 
-var s1 = 'Hello, World!';
-var s2 = 'Foo';
-
-println(s1, '\n', s2);
+println(('Hello' + ', World!\n') * 3);

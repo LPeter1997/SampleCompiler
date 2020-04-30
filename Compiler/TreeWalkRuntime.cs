@@ -89,14 +89,14 @@ namespace Compiler
 
                 case FunctionDefinitionStatement s:
                 {
-                    var fval = new FunctionValue { Parameters = s.Parameters, Body = s.Body };
+                    var fval = new FunctionValue { Node = s };
                     currentScope.Define(s.Name, new VariableSymbol { IsVariable = false, Value = fval });
                     return;
                 }
 
                 case ReturnStatement s:
                 {
-                    Value value = new VoidValue();
+                    Value value = VoidValue.Instance;
                     if (s.Value != null)
                     {
                         value = Evaluate(s.Value);
@@ -189,49 +189,47 @@ namespace Compiler
                             throw new RuntimeError { Description = "Lvalue expected on left-hand-side of the assignment!" };
                         }
                     }
+                    if (e.Operator.Type == TokenType.And || e.Operator.Type == TokenType.Or)
+                    {
+                        // Special case, we want lazy-evaluation
+                        var lhs = Evaluate(e.Left).AsBool();
+                        if (e.Operator.Type == TokenType.And)
+                        {
+                            // &&
+                            if (lhs.Value)
+                            {
+                                return Evaluate(e.Right).AsBool();
+                            }
+                            Value.Bool(false);
+                        }
+                        else
+                        {
+                            // ||
+                            if (lhs.Value)
+                            {
+                                return lhs;
+                            }
+                            return Evaluate(e.Right).AsBool();
+                        }
+                    }
                     var left = Evaluate(e.Left);
                     var right = Evaluate(e.Right);
                     switch (e.Operator.Type)
                     {
-                        case TokenType.Add: return new IntegerValue { Value = left.AsInteger().Value + right.AsInteger().Value };
-                        case TokenType.Subtract: return new IntegerValue { Value = left.AsInteger().Value - right.AsInteger().Value };
-                        case TokenType.Multiply: return new IntegerValue { Value = left.AsInteger().Value * right.AsInteger().Value };
-                        case TokenType.Divide: return new IntegerValue { Value = left.AsInteger().Value / right.AsInteger().Value };
-                        case TokenType.Modulo: return new IntegerValue { Value = left.AsInteger().Value % right.AsInteger().Value };
+                        case TokenType.Add: return Value.OperatorAdd(left, right);
+                        case TokenType.Subtract: return Value.OperatorSubtract(left, right);
+                        case TokenType.Multiply: return Value.OperatorMultiply(left, right);
+                        case TokenType.Divide: return Value.OperatorDivide(left, right);
+                        case TokenType.Modulo: return Value.OperatorModulo(left, right);
 
-                        case TokenType.Greater: return new BoolValue { Value = left.AsInteger().Value > right.AsInteger().Value };
-                        case TokenType.GreaterOrEqual: return new BoolValue { Value = left.AsInteger().Value >= right.AsInteger().Value };
-                        case TokenType.Less: return new BoolValue { Value = left.AsInteger().Value < right.AsInteger().Value };
-                        case TokenType.LessOrEqual: return new BoolValue { Value = left.AsInteger().Value <= right.AsInteger().Value };
+                        case TokenType.Greater: return Value.OperatorGreater(left, right);
+                        case TokenType.GreaterOrEqual: return Value.OperatorGreaterOrEqual(left, right);
+                        case TokenType.Less: return Value.OperatorLess(left, right);
+                        case TokenType.LessOrEqual: return Value.OperatorLessOrEqual(left, right);
 
-                        // NOTE: These are not lazy!
-                        case TokenType.And: return new BoolValue { Value = left.AsBool().Value && right.AsBool().Value };
-                        case TokenType.Or: return new BoolValue { Value = left.AsBool().Value || right.AsBool().Value };
-
-                        case TokenType.Equal:
-                        case TokenType.NotEqual:
-                        {
-                            if (left.IsInteger())
-                            {
-                                var value = left.AsInteger().Value == right.AsInteger().Value;
-                                if (e.Operator.Type == TokenType.NotEqual)
-                                {
-                                    value = !value;
-                                }
-                                return new BoolValue { Value = value };
-                            }
-                            if (left.IsBool())
-                            {
-                                var value = left.AsBool().Value == right.AsBool().Value;
-                                if (e.Operator.Type == TokenType.NotEqual)
-                                {
-                                    value = !value;
-                                }
-                                return new BoolValue { Value = value };
-                            }
-                            throw new RuntimeError { Description = "Unexpected type in equality operation!" };
-                        }
-
+                        case TokenType.Equal: return Value.OperatorEqual(left, right);
+                        case TokenType.NotEqual: return Value.OperatorNotEqual(left, right);
+                        
                         default: throw new NotImplementedException();
                     }
                 }
@@ -247,9 +245,9 @@ namespace Compiler
                     if (value.IsFunction())
                     {
                         var f = value.AsFunction();
-                        if (f.Parameters.Count != e.Arguments.Count)
+                        if (f.Node.Parameters.Count != e.Arguments.Count)
                         {
-                            throw new RuntimeError { Description = $"Wrong number of arguments! Expected {f.Parameters.Count}, but got {e.Arguments.Count}!" };
+                            throw new RuntimeError { Description = $"Wrong number of arguments! Expected {f.Node.Parameters.Count}, but got {e.Arguments.Count}!" };
                         }
                         return EvaluateCall(f, args);
                     }
@@ -271,12 +269,12 @@ namespace Compiler
             // Push parameters
             for (int i = 0; i < args.Count; ++i)
             {
-                currentScope.Define(f.Parameters[i], new VariableSymbol { IsVariable = true, Value = args[i] });
+                currentScope.Define(f.Node.Parameters[i], new VariableSymbol { IsVariable = true, Value = args[i] });
             }
-            Value returnValue = new VoidValue();
+            Value returnValue = VoidValue.Instance;
             try
             {
-                Execute(f.Body);
+                Execute(f.Node.Body);
             }
             catch (ReturnValue rv)
             {
@@ -346,7 +344,7 @@ namespace Compiler
                     throw new RuntimeError { Description = "Can't print type!" };
                 }
             }
-            return new VoidValue();
+            return VoidValue.Instance;
         }
 
         public static Value Println(List<Value> args)
@@ -360,7 +358,7 @@ namespace Compiler
         {
             ExpectArgc(args, 0);
             Console.Write(' ');
-            return new VoidValue();
+            return VoidValue.Instance;
         }
 
         public static Value PlotX(List<Value> args)
@@ -368,7 +366,7 @@ namespace Compiler
             ExpectArgc(args, 1);
             var plot = args[0].AsBool().Value;
             Console.Write(plot ? 'x' : ' ');
-            return new VoidValue();
+            return VoidValue.Instance;
         }
 
         private static void ExpectArgc(List<Value> args, int cnt)
