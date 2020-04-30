@@ -50,6 +50,25 @@ namespace Compiler
 
         // Operátorok
 
+        // Unáris (egyoperandusú) operátorok
+
+        public static Value OperatorPonate(Value value)
+        {
+            return value.AsInteger();
+        }
+
+        public static Value OperatorNegate(Value value)
+        {
+            return Integer(-value.AsInteger().Value);
+        }
+
+        public static Value OperatorNot(Value value)
+        {
+            return Bool(!value.AsBool().Value);
+        }
+
+        // Bináris (kétoperandusú) operátorok
+
         public static Value OperatorAdd(Value left, Value right)
         {
             if (left.IsInteger() && right.IsInteger())

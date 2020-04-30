@@ -161,9 +161,9 @@ namespace Compiler
                     var sub = Evaluate(e.Subexpression);
                     switch (e.Operator.Type)
                     {
-                        case TokenType.Add: return new IntegerValue { Value = sub.AsInteger().Value };
-                        case TokenType.Subtract: return new IntegerValue { Value = -sub.AsInteger().Value };
-                        case TokenType.Not: return new BoolValue { Value = !sub.AsBool().Value };
+                        case TokenType.Add: return Value.OperatorPonate(sub);
+                        case TokenType.Subtract: return Value.OperatorNegate(sub);
+                        case TokenType.Not: return Value.OperatorNot(sub);
                         default: throw new RuntimeError { Description = $"Unknown unary operator {e.Operator.Type}" };
                     }
                 }
