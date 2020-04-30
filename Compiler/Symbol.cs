@@ -72,13 +72,12 @@ namespace Compiler
     /// </summary>
     public class Scope
     {
-        private Scope parent;
-        private Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
-
         /// <summary>
         /// A szkóp őse.
         /// </summary>
-        public Scope Parent => parent;
+        public Scope Parent { get; }
+
+        private Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
 
         /// <summary>
         /// Létrehoz egy új szkópot az adott ős szkóppal.
@@ -86,7 +85,7 @@ namespace Compiler
         /// <param name="parent">Az ős szkóp.</param>
         public Scope(Scope parent = null)
         {
-            this.parent = parent;
+            Parent = parent;
         }
 
         /// <summary>
@@ -110,11 +109,11 @@ namespace Compiler
             {
                 return result;
             }
-            if (parent != null)
+            if (Parent != null)
             {
-                return parent.Reference(name);
+                return Parent.Reference(name);
             }
-            throw new SymbolNotFoundError { Name = name };
+            throw new SymbolNotFoundError(name);
         }
     }
 
@@ -246,7 +245,6 @@ namespace Compiler
         }
     }
 
-    // TODO: Helyadatok?
     /// <summary>
     /// Szintén tipikus futásidejű hiba: Ismeretlen szimbólum.
     /// </summary>
@@ -255,7 +253,12 @@ namespace Compiler
         /// <summary>
         /// A nem talált szimbólum azonosítója a szintaxisfában.
         /// </summary>
-        public Token Name { get; set; }
+        public Token Name { get; }
+
+        public SymbolNotFoundError(Token name)
+        {
+            Name = name;
+        }
 
         public override void Show()
         {

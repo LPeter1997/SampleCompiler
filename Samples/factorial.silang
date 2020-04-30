@@ -1,0 +1,7 @@
+
+function factorial(x) {
+	if x < 3 return x;
+	return x * factorial(x - 1);
+}
+
+println(factorial(5));
