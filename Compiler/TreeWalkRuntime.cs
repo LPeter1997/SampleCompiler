@@ -150,7 +150,7 @@ namespace Compiler
                 
                 case VariableExpression e:
                 {
-                    var symbol = this.currentScope.Reference(e.VariableName);
+                    var symbol = this.currentScope.Reference(e.Identifier);
                     return symbol.AsVariable().Value;
                 }
 
@@ -174,10 +174,10 @@ namespace Compiler
                         if (e.Left is VariableExpression lhs)
                         {
                             var rhs = Evaluate(e.Right);
-                            var sym = currentScope.Reference(lhs.VariableName).AsVariable();
+                            var sym = currentScope.Reference(lhs.Identifier).AsVariable();
                             if (!sym.IsVariable)
                             {
-                                throw new RuntimeError { Description = $"Can't change the value of constant '{lhs.VariableName}'" };
+                                throw new RuntimeError { Description = $"Can't change the value of constant '{lhs.Identifier}'" };
                             }
                             sym.Value = rhs;
                             return rhs;

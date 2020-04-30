@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using Utilities;
 
 namespace Compiler
 {
@@ -103,9 +104,9 @@ namespace Compiler
         /// </summary>
         /// <param name="name">A megkeresendő szimbólum neve.</param>
         /// <returns>Az adott nevű szimbólum.</returns>
-        public Symbol Reference(string name)
+        public Symbol Reference(Token name)
         {
-            if (symbols.TryGetValue(name, out var result))
+            if (symbols.TryGetValue(name.Value, out var result))
             {
                 return result;
             }
@@ -252,13 +253,14 @@ namespace Compiler
     public class SymbolNotFoundError : CompilerError
     {
         /// <summary>
-        /// A nem talált szimbólum neve.
+        /// A nem talált szimbólum azonosítója a szintaxisfában.
         /// </summary>
-        public string Name { get; set; }
+        public Token Name { get; set; }
 
         public override void Show()
         {
-            Console.WriteLine($"Error: no such symbol '{Name}'!");
+            Console.WriteLine($"Error: no such symbol '{Name.Value}' referenced at {Name.Position}!");
+            Console.WriteLine(Name.Source.AnnotateAt(Name.Position));
         }
     }
 }

@@ -137,7 +137,7 @@ namespace Compiler
         /// <summary>
         /// A hivatkozott változó neve.
         /// </summary>
-        public string VariableName { get; set; }
+        public Token Identifier { get; set; }
     }
 
     /// <summary>

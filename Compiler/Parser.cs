@@ -178,7 +178,7 @@ namespace Compiler
             if (peek.Type == TokenType.Identifier)
             {
                 input = input.Consume();
-                result = new VariableExpression { VariableName = peek.Value };
+                result = new VariableExpression { Identifier = peek };
                 return input;
             }
             if (peek.Type == TokenType.Integer)
@@ -193,7 +193,7 @@ namespace Compiler
                 result = new BoolLiteralExpression { Value = peek.Type == TokenType.KwTrue };
                 return input;
             }
-            throw new UnexpectedTokenError { Got = peek };
+            throw new UnexpectedTokenError(peek);
         }
     }
 
@@ -350,11 +350,17 @@ namespace Compiler
         /// <summary>
         /// A várt token típus.
         /// </summary>
-        public TokenType Expected { get; set; }
+        public TokenType Expected { get; }
         /// <summary>
         /// A kapott token.
         /// </summary>
-        public Token Got { get; set; }
+        public Token Got { get; }
+
+        public ExpectedTokenError(TokenType expected, Token got)
+        {
+            Expected = expected;
+            Got = got;
+        }
 
         /// <summary>
         /// Kiírja a konzolra a hibaüzenetet.
@@ -374,7 +380,12 @@ namespace Compiler
         /// <summary>
         /// A token, amibe ütköztünk.
         /// </summary>
-        public Token Got { get; set; }
+        public Token Got { get; }
+
+        public UnexpectedTokenError(Token got)
+        {
+            Got = got;
+        }
 
         /// <summary>
         /// Kiírja a konzolra a hibaüzenetet.
@@ -436,7 +447,7 @@ namespace Compiler
             {
                 return Consume();
             }
-            throw new ExpectedTokenError { Expected = type, Got = Peek() };
+            throw new ExpectedTokenError(type, Peek());
         }
     }
 }

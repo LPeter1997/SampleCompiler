@@ -222,7 +222,7 @@ namespace Compiler
                         return NewToken(rx.Item2, len);
                     }
                 }
-                throw new UnknownCharacterError { Token = reader.Peek(), Position = reader.Position, Source = reader };
+                throw new UnknownCharacterError(reader.Peek(), reader.Position, reader);
             }
         }
 
@@ -248,15 +248,22 @@ namespace Compiler
         /// <summary>
         /// Az ismeretlen karakter.
         /// </summary>
-        public char Token { get; set; }
+        public char Token { get; }
         /// <summary>
         /// Az ismeretlen karakter szöveges pozíciója.
         /// </summary>
-        public Position Position { get; set; }
+        public Position Position { get; }
         /// <summary>
         /// A forrás olvasó, amiből a hiba ered.
         /// </summary>
-        new public PosTextReader Source { get; set; }
+        new public PosTextReader Source { get; }
+
+        public UnknownCharacterError(char token, Position position, PosTextReader source)
+        {
+            Token = token;
+            Position = position;
+            Source = source;
+        }
 
         /// <summary>
         /// Kiírja a konzolra a hibaüzenetet.
