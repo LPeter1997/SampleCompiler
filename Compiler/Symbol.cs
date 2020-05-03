@@ -17,6 +17,8 @@ namespace Compiler
         public Scope Global => globalScope;
         public Scope Current => currentScope;
 
+        private bool inCall = false;
+
         /// <summary>
         /// Az aktuális hívásban definiált szimbólumok száma.
         /// </summary>
@@ -34,10 +36,11 @@ namespace Compiler
         /// <summary>
         /// Megvizsgálja, hogy épp a globális szkópban vagyunk-e.
         /// </summary>
-        /// <returns>Igaz, ha épp a globális szkópban vagyunk.</returns>
+        /// <returns>Igaz, ha épp a globális szkópban, vagy egy leszármazottjában 
+        /// vagyunk.</returns>
         public bool IsGlobalScope()
         {
-            return currentScope == globalScope;
+            return !inCall;
         }
 
         /// <summary>
@@ -58,6 +61,8 @@ namespace Compiler
         /// <returns>A definiált szimbólumok száma.</returns>
         public int Call(Action action)
         {
+            bool wasInCall = inCall;
+            inCall = true;
             var oldCnt = SymbolCount;
             SymbolCount = 0;
             var oldScope = SwapScope(new Scope(globalScope));
@@ -65,6 +70,7 @@ namespace Compiler
             SwapScope(oldScope);
             var ret = SymbolCount;
             SymbolCount = oldCnt;
+            inCall = wasInCall;
             return ret;
         }
 
