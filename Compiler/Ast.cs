@@ -342,7 +342,7 @@ namespace Compiler
         /// <summary>
         /// A definiált változó neve.
         /// </summary>
-        public string Name { get; set; }
+        public Token Name { get; set; }
         /// <summary>
         /// A definiált változó értéke.
         /// </summary>

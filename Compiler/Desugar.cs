@@ -95,9 +95,9 @@ namespace Compiler
                     // például összetett operátorokat.
                     return DesugarStatement(new CompoundStatement { Statements = new List<Statement> 
                     { 
-                        new VarDefinitionStatement{ Name = "for.from", Value = s.From },
-                        new VarDefinitionStatement{ Name = "for.to", Value = s.To },
-                        new VarDefinitionStatement{ Name = s.Counter.Value, Value = new VariableExpression { Identifier = fromToken } },
+                        new VarDefinitionStatement{ Name = fromToken, Value = s.From },
+                        new VarDefinitionStatement{ Name = toToken, Value = s.To },
+                        new VarDefinitionStatement{ Name = s.Counter, Value = new VariableExpression { Identifier = fromToken } },
                         new IfStatement
                         {
                             Condition = new BinaryExpression

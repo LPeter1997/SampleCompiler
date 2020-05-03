@@ -342,7 +342,7 @@ namespace Compiler
         private static TokenView ParseVarStatement(TokenView input, out Statement result)
         {
             input = input.Expect(TokenType.KwVar);
-            var varname = input.Peek().Value;
+            var varname = input.Peek();
             input = input.Expect(TokenType.Identifier);
             input = input.Expect(TokenType.Assign);
             input = ExpressionParser.Parse(input, out var val);

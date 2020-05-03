@@ -95,7 +95,7 @@ namespace Compiler
                 case VarDefinitionStatement s:
                 {
                     var value = Evaluate(s.Value);
-                    symbols.DefineSymbol(s.Name, new VariableSymbol { IsVariable = true, Value = value });
+                    symbols.DefineSymbol(s.Name.Value, new VariableSymbol { IsVariable = true, Value = value });
                     return;
                 }
 

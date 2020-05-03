@@ -15,6 +15,12 @@ namespace Compiler
         private Scope currentScope;
 
         public Scope Global => globalScope;
+        public Scope Current => currentScope;
+
+        /// <summary>
+        /// Az aktuális hívásban definiált szimbólumok száma.
+        /// </summary>
+        public int SymbolCount { get; private set; } = 0;
 
         /// <summary>
         /// Létrehoz egy új szimbólumfát egy globális szkóppal.
@@ -49,11 +55,17 @@ namespace Compiler
         /// Egy függvényhívás szkópját állítja elő.
         /// </summary>
         /// <param name="action">A felhasználói függvény, mely hívott függvény szkópjában kerül meghívásra.</param>
-        public void Call(Action action)
+        /// <returns>A definiált szimbólumok száma.</returns>
+        public int Call(Action action)
         {
+            var oldCnt = SymbolCount;
+            SymbolCount = 0;
             var oldScope = SwapScope(new Scope(globalScope));
             action();
             SwapScope(oldScope);
+            var ret = SymbolCount;
+            SymbolCount = oldCnt;
+            return ret;
         }
 
         /// <summary>
@@ -61,9 +73,12 @@ namespace Compiler
         /// </summary>
         /// <param name="name">A definiálandó szimbólum neve.</param>
         /// <param name="symbol">A definiálandó szimbólum.</param>
-        public void DefineSymbol(string name, Symbol symbol)
+        /// <returns>A definiált szimbólum sorszáma.</returns>
+        public int DefineSymbol(string name, Symbol symbol)
         {
             currentScope.Define(name, symbol);
+            var index = SymbolCount++;
+            return index;
         }
 
         /// <summary>
@@ -172,7 +187,7 @@ namespace Compiler
         public Scope Parent { get; }
 
         private Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
-
+        
         /// <summary>
         /// Létrehoz egy új szkópot az adott ős szkóppal.
         /// </summary>
