@@ -11,17 +11,7 @@ namespace Compiler
     /// </summary>
     public class TreeWalkInterpreter
     {
-        private Scope globalScope;
-        private Scope currentScope;
-
-        /// <summary>
-        /// Létrehoz egy új fa alapú értelmezőt egy üres, globólis szkóppal.
-        /// </summary>
-        public TreeWalkInterpreter()
-        {
-            this.globalScope = new Scope();
-            this.currentScope = this.globalScope;
-        }
+        private SymbolTable symbols = new SymbolTable();
 
         /// <summary>
         /// Futtatja az adott programot a szintaxisfa alapján.
@@ -42,7 +32,7 @@ namespace Compiler
         public void AddNativeFunction(string name, Func<List<Value>, Value> func)
         {
             var sym = new NativeFunctionValue { Function = func };
-            globalScope.Define(name, new VariableSymbol { IsVariable = false, Value = sym });
+            symbols.Global.Define(name, new VariableSymbol { IsVariable = false, Value = sym });
         }
 
         /// <summary>
@@ -90,7 +80,7 @@ namespace Compiler
                 case FunctionDefinitionStatement s:
                 {
                     var fval = new FunctionValue { Node = s };
-                    currentScope.Define(s.Name, new VariableSymbol { IsVariable = false, Value = fval });
+                    symbols.DefineSymbol(s.Name, new VariableSymbol { IsVariable = false, Value = fval });
                     return;
                 }
 
@@ -107,23 +97,28 @@ namespace Compiler
                 case VarDefinitionStatement s:
                 {
                     var value = Evaluate(s.Value);
-                    currentScope.Define(s.Name, new VariableSymbol { IsVariable = true, Value = value });
+                    symbols.DefineSymbol(s.Name, new VariableSymbol { IsVariable = true, Value = value });
                     return;
                 }
 
                 case CompoundStatement s:
                 {
-                    if (!suppressScope)
+                    if (suppressScope)
                     {
-                        PushScope();
+                        foreach (var substmt in s.Statements)
+                        {
+                            Execute(substmt);
+                        }
                     }
-                    foreach (var substmt in s.Statements)
+                    else
                     {
-                        Execute(substmt);
-                    }
-                    if (!suppressScope)
-                    {
-                        PopScope();
+                        symbols.Enscope(() =>
+                        {
+                            foreach (var substmt in s.Statements)
+                            {
+                                Execute(substmt);
+                            }
+                        });
                     }
                     return;
                 }
@@ -152,7 +147,7 @@ namespace Compiler
 
                 case VariableExpression e:
                 {
-                    var symbol = this.currentScope.Reference(e.Identifier);
+                    var symbol = symbols.ReferenceSymbol(e.Identifier);
                     return symbol.AsVariable().Value;
                 }
 
@@ -176,7 +171,7 @@ namespace Compiler
                         if (e.Left is VariableExpression lhs)
                         {
                             var rhs = Evaluate(e.Right);
-                            var sym = currentScope.Reference(lhs.Identifier).AsVariable();
+                            var sym = symbols.ReferenceSymbol(lhs.Identifier).AsVariable();
                             if (!sym.IsVariable)
                             {
                                 throw new RuntimeError { Description = $"Can't change the value of constant '{lhs.Identifier}'" };
@@ -265,40 +260,25 @@ namespace Compiler
 
         private Value EvaluateCall(FunctionValue f, List<Value> args)
         {
-            var oldScope = SwapScope(new Scope(globalScope));
-            // Push parameters
-            for (int i = 0; i < args.Count; ++i)
+            Value returnValue = null;
+            symbols.Call(() =>
             {
-                currentScope.Define(f.Node.Parameters[i], new VariableSymbol { IsVariable = true, Value = args[i] });
-            }
-            Value returnValue = VoidValue.Instance;
-            try
-            {
-                Execute(f.Node.Body);
-            }
-            catch (ReturnValue rv)
-            {
-                returnValue = rv.Value;
-            }
-            SwapScope(oldScope);
+                // Push parameters
+                for (int i = 0; i < args.Count; ++i)
+                {
+                    symbols.DefineSymbol(f.Node.Parameters[i], new VariableSymbol { IsVariable = true, Value = args[i] });
+                }
+                returnValue = VoidValue.Instance;
+                try
+                {
+                    Execute(f.Node.Body);
+                }
+                catch (ReturnValue rv)
+                {
+                    returnValue = rv.Value;
+                }
+            });
             return returnValue;
-        }
-
-        private Scope SwapScope(Scope newScope)
-        {
-            var result = this.currentScope;
-            this.currentScope = newScope;
-            return result;
-        }
-
-        private void PushScope()
-        {
-            this.currentScope = new Scope(this.currentScope);
-        }
-
-        private void PopScope()
-        {
-            this.currentScope = this.currentScope.Parent;
         }
     }
 

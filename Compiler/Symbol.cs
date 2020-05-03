@@ -7,6 +7,85 @@ using Utilities;
 namespace Compiler
 {
     /// <summary>
+    /// Segédosztály gyakori szimbólumtábla/szimbólumfa műveletekhez.
+    /// </summary>
+    public class SymbolTable
+    {
+        private Scope globalScope;
+        private Scope currentScope;
+
+        public Scope Global => globalScope;
+
+        /// <summary>
+        /// Létrehoz egy új szimbólumfát egy globális szkóppal.
+        /// </summary>
+        public SymbolTable()
+        {
+            globalScope = new Scope();
+            currentScope = globalScope;
+        }
+
+        /// <summary>
+        /// Beburkolja a felhasználó függvényét egy új, belső szkópba.
+        /// </summary>
+        /// <param name="action">A felhasználói függvény, mely a belső szkópban kerül meghívásra.</param>
+        public void Enscope(Action action)
+        {
+            PushScope();
+            action();
+            PopScope();
+        }
+
+        /// <summary>
+        /// Egy függvényhívás szkópját állítja elő.
+        /// </summary>
+        /// <param name="action">A felhasználói függvény, mely hívott függvény szkópjában kerül meghívásra.</param>
+        public void Call(Action action)
+        {
+            var oldScope = SwapScope(new Scope(globalScope));
+            action();
+            SwapScope(oldScope);
+        }
+
+        /// <summary>
+        /// Definiálja az adott szimbólumot az aktuális szkópban.
+        /// </summary>
+        /// <param name="name">A definiálandó szimbólum neve.</param>
+        /// <param name="symbol">A definiálandó szimbólum.</param>
+        public void DefineSymbol(string name, Symbol symbol)
+        {
+            currentScope.Define(name, symbol);
+        }
+
+        /// <summary>
+        /// Megkeres egy szimbólumot az adott név alatt. Ha nem található, kivételt dob.
+        /// </summary>
+        /// <param name="name">A megkeresendő szimbólum neve.</param>
+        /// <returns>Az adott nevű szimbólum.</returns>
+        public Symbol ReferenceSymbol(Token name)
+        {
+            return currentScope.Reference(name);
+        }
+
+        private Scope SwapScope(Scope newScope)
+        {
+            var result = currentScope;
+            currentScope = newScope;
+            return result;
+        }
+
+        private void PushScope()
+        {
+            currentScope = new Scope(currentScope);
+        }
+
+        private void PopScope()
+        {
+            currentScope = currentScope.Parent;
+        }
+    }
+
+    /// <summary>
     /// Szimbólum minden, aminek neve van és később hivatkozunk rá: változók, típusok, 
     /// függvények, stb.
     /// </summary>
@@ -38,6 +117,11 @@ namespace Compiler
         /// A szimbólum aktuális értéke.
         /// </summary>
         public Value Value { get; set; }
+
+        /// <summary>
+        /// A regiszter index abban az esetben, ha fordítjuk a kódot.
+        /// </summary>
+        public int RegisterIndex { get; set; }
     }
 
     /// <summary>
