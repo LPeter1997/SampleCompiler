@@ -20,12 +20,14 @@ namespace Compiler
     {
         static void Main(string[] args)
         {
-            string source = File.ReadAllText("Samples/strings.silang");
+            string source = File.ReadAllText("Samples/primes.silang");
 
             try
             {
                 var tokens = Lexer.Lex(source);
                 var ast = Parser.ParseProgram(tokens);
+                // Mielőtt bármi történne, leegyszerűsítjük az AST-t
+                ast = (Statement)Desugaring.Desugar(ast);
                 //Console.WriteLine(ast.ToJson());
                 TreeWalkInterpreter.RunProgram(ast);
             }

@@ -85,6 +85,10 @@ namespace Compiler
         Multiply, Divide, Modulo, // * / %
         Not, And, Or,             // ! && ||
 
+        // Összetett (angolul compound) operátorok
+        AddAssign, SubtractAssign, // += -=
+        MultiplyAssign, DivideAssign, ModuloAssign, // *= /= %=
+
         /// <summary>
         /// Forrásszöveg vége.
         /// </summary>

@@ -115,6 +115,12 @@ namespace Compiler
             AddKeyword("==", TokenType.Equal);
             AddKeyword("!=", TokenType.NotEqual);
 
+            AddKeyword("+=", TokenType.AddAssign);
+            AddKeyword("-=", TokenType.SubtractAssign);
+            AddKeyword("*=", TokenType.MultiplyAssign);
+            AddKeyword("/=", TokenType.DivideAssign);
+            AddKeyword("%=", TokenType.ModuloAssign);
+
             AddKeyword("=", TokenType.Assign);
             AddKeyword("+", TokenType.Add);
             AddKeyword("-", TokenType.Subtract);
