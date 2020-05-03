@@ -42,8 +42,6 @@ namespace Compiler
         {
             AddNativeFunction("print", DefaultNativeFunctions.Print);
             AddNativeFunction("println", DefaultNativeFunctions.Println);
-            AddNativeFunction("space", DefaultNativeFunctions.Space);
-            AddNativeFunction("plot_x", DefaultNativeFunctions.PlotX);
         }
 
         /// <summary>

@@ -26,6 +26,15 @@ namespace Compiler
         }
 
         /// <summary>
+        /// Megvizsgálja, hogy épp a globális szkópban vagyunk-e.
+        /// </summary>
+        /// <returns>Igaz, ha épp a globális szkópban vagyunk.</returns>
+        public bool IsGlobalScope()
+        {
+            return currentScope == globalScope;
+        }
+
+        /// <summary>
         /// Beburkolja a felhasználó függvényét egy új, belső szkópba.
         /// </summary>
         /// <param name="action">A felhasználói függvény, mely a belső szkópban kerül meghívásra.</param>
@@ -120,8 +129,9 @@ namespace Compiler
 
         /// <summary>
         /// A regiszter index abban az esetben, ha fordítjuk a kódot.
+        /// Akkor null, ha még nem allokáltunk neki regisztert.
         /// </summary>
-        public int RegisterIndex { get; set; }
+        public int? RegisterIndex { get; set; } = null;
     }
 
     /// <summary>
