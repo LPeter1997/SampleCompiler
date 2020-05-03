@@ -244,6 +244,10 @@ namespace Compiler
             {
                 return ParseWhileStatement(input, out result);
             }
+            if (peek.Type == TokenType.KwFor)
+            {
+                return ParseForStatement(input, out result);
+            }
             if (peek.Type == TokenType.KwVar)
             {
                 return ParseVarStatement(input, out result);
@@ -319,6 +323,19 @@ namespace Compiler
             input = ExpressionParser.Parse(input, out var condition);
             input = ParseStatement(input, out var body);
             result = new WhileStatement { Condition = condition, Body = body };
+            return input;
+        }
+
+        private static TokenView ParseForStatement(TokenView input, out Statement result)
+        {
+            input = input.Expect(TokenType.KwFor);
+            var varname = input.Peek();
+            input = input.Expect(TokenType.Identifier);
+            input = ExpressionParser.Parse(input, out var from);
+            input = input.Expect(TokenType.Comma);
+            input = ExpressionParser.Parse(input, out var to);
+            input = ParseStatement(input, out var body);
+            result = new ForStatement { Counter = varname, From = from, To = to, Body = body };
             return input;
         }
 

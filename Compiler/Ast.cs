@@ -278,6 +278,29 @@ namespace Compiler
     }
 
     /// <summary>
+    /// Számláló ciklus. Csupán syntax-sugar a while-ra.
+    /// </summary>
+    public class ForStatement : Statement
+    {
+        /// <summary>
+        /// A számláló változó neve.
+        /// </summary>
+        public Token Counter { get; set; }
+        /// <summary>
+        /// Kezdeti érték.
+        /// </summary>
+        public Expression From { get; set; }
+        /// <summary>
+        /// Végső érték.
+        /// </summary>
+        public Expression To { get; set; }
+        /// <summary>
+        /// A ciklus kódblokkja.
+        /// </summary>
+        public Statement Body { get; set; }
+    }
+
+    /// <summary>
     /// Egy függvény definíciója.
     /// 
     /// Megjegyzés: Ez egy játék dizájn. A legtöbb mai nyelv a sorrend-független

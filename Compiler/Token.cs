@@ -61,6 +61,7 @@ namespace Compiler
         KwIf,       // 'if'
         KwElse,     // 'else'
         KwWhile,    // 'while'
+        KwFor,      // 'for'
         KwVar,      // 'var'
         KwReturn,   // 'return'
 

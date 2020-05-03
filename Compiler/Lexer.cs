@@ -94,6 +94,7 @@ namespace Compiler
             AddKeyword("if", TokenType.KwIf);
             AddKeyword("else", TokenType.KwElse);
             AddKeyword("while", TokenType.KwWhile);
+            AddKeyword("for", TokenType.KwFor);
             AddKeyword("var", TokenType.KwVar);
             AddKeyword("return", TokenType.KwReturn);
 
