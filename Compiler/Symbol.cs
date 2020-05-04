@@ -82,6 +82,7 @@ namespace Compiler
         /// <returns>A definiált szimbólum sorszáma.</returns>
         public int DefineSymbol(string name, Symbol symbol)
         {
+            symbol.IsGlobal = IsGlobalScope();
             currentScope.Define(name, symbol);
             var index = SymbolCount++;
             return index;
@@ -121,6 +122,8 @@ namespace Compiler
     /// </summary>
     public abstract class Symbol
     {
+        public bool IsGlobal { get; set; }
+
         public VariableSymbol AsVariable() 
         {
             if (this is VariableSymbol v)

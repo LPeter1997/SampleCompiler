@@ -53,6 +53,52 @@ namespace Compiler
             top.InstructionPointer += 1;
             switch (instr)
             {
+                case Opcode.GAlloc:
+                {
+                    Debug.Assert(Globals == null);
+                    var len = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    Globals = new Value[len];
+                } break;
+
+                case Opcode.GLoad:
+                {
+                    var idx = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    stk.Push(Globals[idx]);
+                } break;
+
+                case Opcode.GStore:
+                {
+                    var idx = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    var value = stk.Pop();
+                    Globals[idx] = value;
+                } break;
+
+                case Opcode.Alloc:
+                {
+                    Debug.Assert(top.Registers == null);
+                    var len = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    top.Registers = new Value[len];
+                } break;
+
+                case Opcode.Load:
+                {
+                    var idx = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    stk.Push(top.Registers[idx]);
+                } break;
+
+                case Opcode.Store:
+                {
+                    var idx = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    var value = stk.Pop();
+                    top.Registers[idx] = value;
+                } break;
+
                 case Opcode.Pop:
                 {
                     stk.Pop();
@@ -76,21 +122,53 @@ namespace Compiler
                 {
                     var index = code.Code[top.InstructionPointer];
                     top.InstructionPointer += 1;
-                    stk.Push(new StringValue { Value = code.Constants[index] });
+                    stk.Push(new StringValue { Value = code.Constants[index] as string });
                 } break;
 
-                case Opcode.Alloc:
+                case Opcode.Pushf:
                 {
-                    Debug.Assert(top.Registers == null);
-                    var len = code.Code[top.InstructionPointer];
+                    var value = code.Code[top.InstructionPointer];
                     top.InstructionPointer += 1;
-                    top.Registers = new Value[len];
+                    stk.Push(new FunctionValue { Address = value });
+                } break;
+
+                case Opcode.Pushnf:
+                {
+                    var constIndex = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+                    var value = code.Constants[constIndex];
+                    stk.Push(new NativeFunctionValue { Function = value as Func<List<Value>, Value> });
                 } break;
 
                 case Opcode.Call:
                 {
-                    // TODO
-                    throw new NotImplementedException();
+                    var argc = code.Code[top.InstructionPointer];
+                    top.InstructionPointer += 1;
+
+                    var args = new List<Value>();
+                    for (int i = 0; i < argc; ++i)
+                    {
+                        args.Add(stk.Pop());
+                    }
+
+                    var func = stk.Pop();
+                    if (func.IsFunction())
+                    {
+                        var f = func.AsFunction();
+                        var newFrame = new Frame { InstructionPointer = f.Address.Value };
+                        for (int i = argc - 1; i >= 0; --i)
+                        {
+                            newFrame.ComputationStack.Push(args[i]);
+                        }
+                        callStack.Push(newFrame);
+                    }
+                    else
+                    {
+                        var nf = func.AsNativeFunction();
+                        args.Reverse();
+                        var ret = nf.Function(args);
+                        stk.Push(ret);
+                    }
                 } break;
 
                 case Opcode.Jump:
@@ -117,29 +195,12 @@ namespace Compiler
                     {
                         returnValue = stk.Pop();
                     }
-                    var retAddr = top.ReturnAddress;
                     callStack.Pop();
                     if (callStack.Count > 0)
                     {
                         top = callStack.Peek();
-                        top.InstructionPointer = retAddr;
                         top.ComputationStack.Push(returnValue);
                     }
-                } break;
-
-                case Opcode.Load:
-                {
-                    var idx = code.Code[top.InstructionPointer];
-                    top.InstructionPointer += 1;
-                    stk.Push(top.Registers[idx]);
-                } break;
-
-                case Opcode.Store:
-                {
-                    var idx = code.Code[top.InstructionPointer];
-                    top.InstructionPointer += 1;
-                    var value = stk.Pop();
-                    top.Registers[idx] = value;
                 } break;
 
                 case Opcode.Add:
@@ -184,6 +245,20 @@ namespace Compiler
                     stk.Push(Value.OperatorEqual(left, right));
                 } break;
 
+                case Opcode.Greater:
+                {
+                    var right = stk.Pop();
+                    var left = stk.Pop();
+                    stk.Push(Value.OperatorGreater(left, right));
+                } break;
+
+                case Opcode.Less:
+                {
+                    var right = stk.Pop();
+                    var left = stk.Pop();
+                    stk.Push(Value.OperatorLess(left, right));
+                } break;
+
                 case Opcode.Not:
                 {
                     var op = stk.Pop();
@@ -195,6 +270,8 @@ namespace Compiler
                     var op = stk.Pop();
                     stk.Push(Value.OperatorNegate(op));
                 } break;
+
+                default: throw new NotImplementedException();
             }
         }
     }
@@ -213,10 +290,6 @@ namespace Compiler
         /// </summary>
         public Stack<Value> ComputationStack { get; set; } = new Stack<Value>();
         /// <summary>
-        /// A visszatérési cím.
-        /// </summary>
-        public int ReturnAddress { get; set; }
-        /// <summary>
         /// Az aktuális utasítás címe.
         /// </summary>
         public int InstructionPointer { get; set; }
@@ -234,7 +307,7 @@ namespace Compiler
         /// <summary>
         /// Konstansok.
         /// </summary>
-        public string[] Constants { get; set; }
+        public object[] Constants { get; set; }
     }
 
     /// <summary>
@@ -244,7 +317,7 @@ namespace Compiler
     {
         private SymbolTable symbols = new SymbolTable();
         private List<int> code = new List<int>();
-        private List<string> constants = new List<string>();
+        private List<object> constants = new List<object>();
 
         /// <summary>
         /// Visszaadja a lefordított utasítások bytekód reprezentációját.
@@ -263,18 +336,48 @@ namespace Compiler
         public static Bytecode CompileProgram(Statement stmt)
         {
             var compiler = new Compiler();
-            // TODO: Hack teszteléshez
-            compiler.Write(Opcode.Alloc, 128);
-            compiler.Compile(stmt);
+            compiler.Write(Opcode.GAlloc);
+            var gallocPos = compiler.BlankAddress();
+            compiler.AddDefaultNativeFunctions();
+            compiler.Compile(stmt, true);
             compiler.Write(Opcode.Return);
+            compiler.FillAddress(gallocPos, compiler.symbols.SymbolCount);
             return compiler.Bytecode;
+        }
+
+        /// <summary>
+        /// Regisztrál egy új natív függvényt a globális szkópba.
+        /// </summary>
+        /// <param name="name">A függvény neve.</param>
+        /// <param name="func">A regisztrálandó C# függvény.</param>
+        public void AddNativeFunction(string name, Func<List<Value>, Value> func)
+        {
+            Debug.Assert(symbols.IsGlobalScope());
+
+            var sym = new VariableSymbol { IsVariable = false };
+            var regIdx = symbols.DefineSymbol(name, sym);
+            sym.RegisterIndex = regIdx;
+
+            var constIdx = AddConstant(func);
+
+            Write(Opcode.Pushnf, constIdx);
+            Write(Opcode.GStore, regIdx);
+        }
+
+        /// <summary>
+        /// Regisztrál néhány beépített függvényt.
+        /// </summary>
+        public void AddDefaultNativeFunctions()
+        {
+            AddNativeFunction("print", DefaultNativeFunctions.Print);
+            AddNativeFunction("println", DefaultNativeFunctions.Println);
         }
 
         /// <summary>
         /// Lefordítja az adott utasítást.
         /// </summary>
         /// <param name="stmt">A lefordítandó utasítás szintaxisfája.</param>
-        public void Compile(Statement stmt)
+        public void Compile(Statement stmt, bool suppressScope = false)
         {
             switch (stmt)
             {
@@ -302,8 +405,9 @@ namespace Compiler
 
                     var thenAddr = CurrentAddress;
                     Compile(s.Then);
-                    var endPos = CurrentAddress;
-                    code.Add(0);
+
+                    Write(Opcode.Jump);
+                    var endPos = BlankAddress();
 
                     var elseAddr = CurrentAddress;
                     Compile(s.Else);
@@ -348,12 +452,42 @@ namespace Compiler
                     Jump after_f_code
                     func:
                         Alloc <változók száma>
+                        <változók hozzárendelése>
                         <blokk fordítása>
                         Return
                     after_f_code:
                     */
-                    // TODO
-                    throw new NotImplementedException();
+
+                    var sym = new VariableSymbol { IsVariable = false };
+                    var idx = symbols.DefineSymbol(s.Name, sym);
+                    sym.RegisterIndex = idx;
+                    int funcAddress = 0;
+                    symbols.Call(() =>
+                    {
+                        Write(Opcode.Jump);
+                        var afterPos = BlankAddress();
+                        funcAddress = CurrentAddress;
+                        Write(Opcode.Alloc);
+                        var allocCntPos = BlankAddress();
+
+                        // Változók hozzárendelése
+                        // Visszafele, hiszen fordított sorrendbe kerülnek a verem tetejére!
+                        for (int i = s.Parameters.Count - 1; i >= 0; --i)
+                        {
+                            var sym = new VariableSymbol { IsVariable = true };
+                            var idx = symbols.DefineSymbol(s.Parameters[i], sym);
+                            sym.RegisterIndex = idx;
+                            Write(Opcode.Store, idx);
+                        }
+
+                        Compile(s.Body);
+
+                        FillAddress(afterPos, CurrentAddress);
+                        FillAddress(allocCntPos, symbols.SymbolCount);
+                    });
+                    // Eltároljuk a függvvényt az adott regiszterben
+                    Write(Opcode.Pushf, funcAddress);
+                    Write(symbols.IsGlobalScope() ? Opcode.GStore : Opcode.Store, idx);
                 } break;
 
                 case ReturnStatement s:
@@ -371,20 +505,37 @@ namespace Compiler
                     <kifejezés kiértékelés, eredmény a verem tetején>
                     Store <index>
                     */
+
+                    Compile(s.Value);
+
                     // A világ legegyszerűbb regiszter allokációja
                     var sym = new VariableSymbol { IsVariable = true };
                     var symIndex = symbols.DefineSymbol(s.Name.Value, sym);
                     sym.RegisterIndex = symIndex;
 
-                    Write(Opcode.Store, symIndex);
+                    Write(symbols.IsGlobalScope() ? Opcode.GStore : Opcode.Store, symIndex);
                 } break;
 
                 case CompoundStatement s:
                 {
-                    // Elég csak lefordítanunk az összes utasítást egymás után
-                    foreach (var st in s.Statements)
+                    if (suppressScope)
                     {
-                        Compile(st);
+                        // Elég csak lefordítanunk az összes utasítást egymás után
+                        foreach (var st in s.Statements)
+                        {
+                            Compile(st);
+                        }
+                    }
+                    else
+                    {
+                        symbols.Enscope(() =>
+                        {
+                            // Elég csak lefordítanunk az összes utasítást egymás után
+                            foreach (var st in s.Statements)
+                            {
+                                Compile(st);
+                            }
+                        });
                     }
                 } break;
 
@@ -436,8 +587,9 @@ namespace Compiler
                     /*
                     Load <regiszter index>
                     */
-                    int idx = symbols.ReferenceSymbol(e.Identifier).AsVariable().RegisterIndex.Value;
-                    Write(Opcode.Load, idx);
+                    var sym = symbols.ReferenceSymbol(e.Identifier).AsVariable();
+                    int idx = sym.RegisterIndex.Value;
+                    Write(sym.IsGlobal ? Opcode.GLoad : Opcode.Load, idx);
                 } break;
 
                 case UnaryExpression e:
@@ -460,8 +612,29 @@ namespace Compiler
                     if (e.Operator.Type == TokenType.Assign)
                     {
                         // Speciális eset
-                        // TODO
-                        throw new NotImplementedException();
+                        if (e.Left is VariableExpression ident)
+                        {
+                            /*
+                            <jobboldali kifejezés kiértékelés, eredmény a verem tetején> 
+                            Store <regiszter index>
+                            Load <regiszter index> // Hogy a stackre kerüljön a kiértékelt
+                            */
+                            var sym = symbols.ReferenceSymbol(ident.Identifier).AsVariable();
+                            if (!sym.IsVariable)
+                            {
+                                // TODO
+                                throw new NotImplementedException("Can't assign to non-variable!");
+                            }
+                            var idx = sym.RegisterIndex.Value;
+                            Compile(e.Right);
+                            Write(symbols.IsGlobalScope() ? Opcode.GStore : Opcode.Store, idx);
+                            Write(symbols.IsGlobalScope() ? Opcode.GLoad: Opcode.Load, idx);
+                        }
+                        else
+                        {
+                            // TODO
+                            throw new NotImplementedException("Lvalue expected on left-hand-side of the assignment!");
+                        }
                         break;
                     }
                     if (e.Operator.Type == TokenType.Or)
@@ -558,7 +731,7 @@ namespace Compiler
             code[pos] = addr;
         }
 
-        private int AddConstant(string value)
+        private int AddConstant(object value)
         {
             // Lehetséges optimalizáció: Ha már hozzáadtuk, ne tároljuk mégegyszer
             // Egy további lehetséges optimalizáció az összes sztringet egybe fűzni
@@ -579,9 +752,29 @@ namespace Compiler
         /// </summary>
         Return,
         /// <summary>
+        /// Allokál egy adott mennyiségű globális regisztert. Operandus az opkód után.
+        /// </summary>
+        GAlloc,
+        /// <summary>
+        /// Eltárolja a verem tetején levő értéket egy globális regiszterbe. Regiszter címe az utasítás után.
+        /// </summary>
+        GStore,
+        /// <summary>
+        /// Egy globális regiszter érték betöltése, felrakása a verem tetejére.
+        /// </summary>
+        GLoad,
+        /// <summary>
         /// Allokál egy adott mennyiségű regisztert. Operandus az opkód után.
         /// </summary>
         Alloc,
+        /// <summary>
+        /// Eltárolja a verem tetején levő értéket egy regiszterbe. Regiszter címe az utasítás után.
+        /// </summary>
+        Store,
+        /// <summary>
+        /// Egy regiszter érték betöltése, felrakása a verem tetejére.
+        /// </summary>
+        Load,
         /// <summary>
         /// Egész konstans stack-re rakása. Operandus az opkód után.
         /// </summary>
@@ -594,6 +787,14 @@ namespace Compiler
         /// String konstans stack-re rakása. Konstans indexe az opkód után.
         /// </summary>
         Pushs,
+        /// <summary>
+        /// Függvény címének stack-re rakása. Operandus az opkód után.
+        /// </summary>
+        Pushf,
+        /// <summary>
+        /// Natív függvény konstans indexének stack-re rakása. Operandus az opkód után.
+        /// </summary>
+        Pushnf,
         /// <summary>
         /// Leszedi az értéket a verem tetejéről.
         /// </summary>
@@ -610,14 +811,6 @@ namespace Compiler
         /// Függvényhívás. Cím és paraméterek a verem tetején. Paraméterszám az opkód után.
         /// </summary>
         Call,
-        /// <summary>
-        /// Eltárolja a verem tetején levő értéket egy regiszterbe. Regiszter címe az utasítás után.
-        /// </summary>
-        Store,
-        /// <summary>
-        /// Egy regiszter érték betöltése, felrakása a verem tetejére.
-        /// </summary>
-        Load,
         // Bináris műveletek: Operandus a két felső érték a veremben (ezek ki is kerülnek a veremből).
         // Az eredmény a verem tetejére kerül.
         Add, Sub, Mul, Div, Mod, Less, Greater, Eq, 

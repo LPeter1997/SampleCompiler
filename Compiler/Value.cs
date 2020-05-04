@@ -220,6 +220,11 @@ namespace Compiler
         /// A függvénydefiníció szintaxisfája.
         /// </summary>
         public FunctionDefinitionStatement Node { get; set; }
+
+        /// <summary>
+        /// Bytekódban a függvény címe.
+        /// </summary>
+        public int? Address { get; set; }
     }
 
     /// <summary>

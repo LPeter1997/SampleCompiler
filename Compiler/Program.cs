@@ -29,7 +29,16 @@ namespace Compiler
                 // Mielőtt bármi történne, leegyszerűsítjük az AST-t
                 ast = (Statement)Desugaring.Desugar(ast);
                 //Console.WriteLine(ast.ToJson());
-                TreeWalkInterpreter.RunProgram(ast);
+                if (true)
+                {
+                    TreeWalkInterpreter.RunProgram(ast);
+                }
+                else
+                {
+                    var code = Compiler.CompileProgram(ast);
+                    var vm = new VM(code);
+                    vm.Execute();
+                }
             }
             catch (CompilerError e)
             {
